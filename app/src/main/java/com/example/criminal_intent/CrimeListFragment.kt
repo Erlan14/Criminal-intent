@@ -16,7 +16,7 @@ import java.util.*
 class CrimeListFragment : Fragment() {
 
     private lateinit var rvCrimes: RecyclerView
-    private var adapter: CrimeAdapter? = null
+    private var adapter: CrimeAdapter = CrimeAdapter(listOf())
 
     private val vm: CrimeListVM by lazy {
         ViewModelProviders.of(this).get(CrimeListVM::class.java)
@@ -29,16 +29,20 @@ class CrimeListFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_crime_list, container, false)
         rvCrimes = view.findViewById(R.id.rv_crimes)
-
-        updateUI()
-
+        rvCrimes.adapter = adapter
         return view
     }
 
-    private fun updateUI() {
-        val crimes = vm.crimes
-        adapter = CrimeAdapter(crimes)
-        rvCrimes.adapter = adapter
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        vm.crimesListLiveData.observe(viewLifecycleOwner, {
+            updateUI(it)
+        })
+    }
+
+    private fun updateUI(crimes: List<Crime>) {
+        adapter.crimes = crimes
+        adapter.notifyDataSetChanged()
     }
 
     private inner class CrimeAdapter(var crimes: List<Crime>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
