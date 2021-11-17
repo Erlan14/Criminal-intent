@@ -10,10 +10,18 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProviders
+import java.util.*
+
+private const val ARG_CRIME_ID = "crime_id"
 
 class CrimeFragment : Fragment() {
 
     private lateinit var crime: Crime
+
+    private val crimeVM: CrimeVM by lazy {
+        ViewModelProviders.of(this)[CrimeVM::class.java]
+    }
 
     private lateinit var etTitle: EditText
     private lateinit var btnDate: Button
@@ -22,6 +30,8 @@ class CrimeFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         crime = Crime()
+        val crimeId = arguments?.getSerializable(ARG_CRIME_ID) as UUID
+        crimeVM.loadCrime(crimeId)
     }
 
     override fun onCreateView(
@@ -55,6 +65,37 @@ class CrimeFragment : Fragment() {
         cbSolved.apply {
             setOnCheckedChangeListener { _, isChecked ->
                 crime.isSolved = isChecked
+            }
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        crimeVM.crimeLiveData.observe(viewLifecycleOwner, {
+            crime = it
+            updateUI()
+        })
+    }
+
+    override fun onStop() {
+        super.onStop()
+        crimeVM.updateCrime(crime)
+    }
+
+    private fun updateUI() {
+        etTitle.setText(crime.title)
+        btnDate.text = crime.date.toString()
+        cbSolved.isChecked = crime.isSolved
+        cbSolved.jumpDrawablesToCurrentState()
+    }
+
+    companion object {
+        fun newInstance(uuid: UUID): CrimeFragment {
+            val args = Bundle().apply {
+                putSerializable(ARG_CRIME_ID, uuid)
+            }
+            return CrimeFragment().apply {
+                arguments = args
             }
         }
     }
