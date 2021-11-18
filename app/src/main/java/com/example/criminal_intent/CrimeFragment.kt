@@ -14,8 +14,10 @@ import androidx.lifecycle.ViewModelProviders
 import java.util.*
 
 private const val ARG_CRIME_ID = "crime_id"
+private const val DIALOG_DATE = "date_dialog"
+private const val REQUEST_DATE = 0
 
-class CrimeFragment : Fragment() {
+class CrimeFragment : Fragment(), DatePickerFragment.Callback {
 
     private lateinit var crime: Crime
 
@@ -44,10 +46,6 @@ class CrimeFragment : Fragment() {
         btnDate = view.findViewById(R.id.btn_date)
         cbSolved = view.findViewById(R.id.cb_solved)
 
-        btnDate.apply {
-            text = crime.date.toString()
-            isEnabled = false
-        }
         return view
     }
 
@@ -65,6 +63,13 @@ class CrimeFragment : Fragment() {
         cbSolved.apply {
             setOnCheckedChangeListener { _, isChecked ->
                 crime.isSolved = isChecked
+            }
+        }
+
+        btnDate.setOnClickListener {
+            DatePickerFragment.newInstance(crime.date).apply {
+                setTargetFragment(this@CrimeFragment, REQUEST_DATE)
+                show(this@CrimeFragment.parentFragmentManager, DIALOG_DATE)
             }
         }
     }
@@ -98,5 +103,10 @@ class CrimeFragment : Fragment() {
                 arguments = args
             }
         }
+    }
+
+    override fun onDateSelected(date: Date) {
+        crime.date = date
+        updateUI()
     }
 }
