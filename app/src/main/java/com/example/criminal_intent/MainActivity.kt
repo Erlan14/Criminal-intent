@@ -2,6 +2,7 @@ package com.example.criminal_intent
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
 import java.util.*
 
 class MainActivity : AppCompatActivity(), CrimeListFragment.Callbacks {
@@ -19,6 +20,10 @@ class MainActivity : AppCompatActivity(), CrimeListFragment.Callbacks {
                 .add(R.id.fragment_container, fragment)
                 .commit()
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onCrimeSelected(uuid: UUID) {

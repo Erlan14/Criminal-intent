@@ -8,4 +8,8 @@ class CrimeListVM : ViewModel() {
 
     val crimesListLiveData = crimeRepository.getCrimes()
 
+    fun addCrime(crime: Crime) {
+        crimeRepository.addCrime(crime)
+    }
+
 }

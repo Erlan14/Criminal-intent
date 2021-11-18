@@ -3,17 +3,14 @@ package com.example.criminal_intent
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -27,10 +24,17 @@ class CrimeListFragment : Fragment() {
     private var callbacks: Callbacks? = null
 
     private lateinit var rvCrimes: RecyclerView
+    private lateinit var tvClickToAdd: TextView
+    private lateinit var tvEmptyLabel: TextView
     private var adapter: CrimeAdapter = CrimeAdapter()
 
     private val vm: CrimeListVM by lazy {
         ViewModelProviders.of(this).get(CrimeListVM::class.java)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(
@@ -41,6 +45,8 @@ class CrimeListFragment : Fragment() {
         Log.i("CrimeListFragment", "onCreateView - $savedInstanceState")
         val view = inflater.inflate(R.layout.fragment_crime_list, container, false)
         rvCrimes = view.findViewById(R.id.rv_crimes)
+        tvClickToAdd = view.findViewById(R.id.tv_click_to_add)
+        tvEmptyLabel = view.findViewById(R.id.tv_empty_label)
         rvCrimes.adapter = adapter
         return view
     }
@@ -51,6 +57,7 @@ class CrimeListFragment : Fragment() {
         vm.crimesListLiveData.observe(viewLifecycleOwner, {
             updateUI(it)
         })
+        tvClickToAdd.setOnClickListener { addCrime() }
     }
 
     override fun onStart() {
@@ -95,8 +102,41 @@ class CrimeListFragment : Fragment() {
         Log.i("CrimeListFragment", "onDetach")
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.fragment_crime_list, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.new_crime -> {
+                addCrime()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun addCrime() {
+        val crime = Crime()
+        vm.addCrime(crime)
+        callbacks?.onCrimeSelected(crime.id)
+    }
+
     private fun updateUI(crimes: List<Crime>) {
-        adapter.submitList(crimes)
+        when (crimes.size) {
+            0 -> setEmptyListView(true)
+            else -> {
+                adapter.submitList(crimes)
+                setEmptyListView(false)
+            }
+        }
+    }
+
+    private fun setEmptyListView(isEmpty: Boolean) {
+        rvCrimes.isVisible = !isEmpty
+        tvClickToAdd.isVisible = isEmpty
+        tvEmptyLabel.isVisible = isEmpty
     }
 
     private inner class CrimeAdapter : ListAdapter<Crime, CrimeHolder>(diffCallback) {

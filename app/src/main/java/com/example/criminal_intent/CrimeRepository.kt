@@ -30,7 +30,7 @@ class CrimeRepository(private val context: Context) {
         }
     }
 
-    fun insertCrime(crime: Crime) {
+    fun addCrime(crime: Crime) {
         executor.execute {
             crimeDao.insert(crime)
         }
