@@ -1,8 +1,12 @@
 package com.example.criminal_intent
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.text.Editable
 import android.text.TextWatcher
+import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +20,8 @@ import java.util.*
 private const val ARG_CRIME_ID = "crime_id"
 private const val DIALOG_DATE = "date_dialog"
 private const val REQUEST_DATE = 0
+private const val REQUEST_CONTACT = 1
+private const val DATE_FORMAT = "EEE, MM, dd"
 
 class CrimeFragment : Fragment(), DatePickerFragment.Callback {
 
@@ -28,6 +34,8 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callback {
     private lateinit var etTitle: EditText
     private lateinit var btnDate: Button
     private lateinit var cbSolved: CheckBox
+    private lateinit var btnSendReport: Button
+    private lateinit var btnChooseSuspect: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +53,8 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callback {
         etTitle = view.findViewById(R.id.et_title)
         btnDate = view.findViewById(R.id.btn_date)
         cbSolved = view.findViewById(R.id.cb_solved)
-
+        btnSendReport = view.findViewById(R.id.btn_report)
+        btnChooseSuspect = view.findViewById(R.id.btn_suspect)
         return view
     }
 
@@ -72,6 +81,45 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callback {
                 show(this@CrimeFragment.parentFragmentManager, DIALOG_DATE)
             }
         }
+        btnSendReport.setOnClickListener {
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, getCrimeReport())
+                putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject))
+            }.also {
+                val chooserIntent = Intent.createChooser(it, getString(R.string.send_report))
+                startActivity(chooserIntent)
+            }
+        }
+        btnChooseSuspect.apply {
+            val picContactIntent = Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI)
+            startActivityForResult(picContactIntent, REQUEST_CONTACT)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when {
+            requestCode != Activity.RESULT_OK -> return
+            requestCode == REQUEST_CONTACT && data != null -> {
+                val contactUri = data.data
+                //Указать какие поля нужно вытащить из запроса
+                val queryFields = arrayOf(ContactsContract.Contacts.DISPLAY_NAME)
+                val cursor = requireActivity().contentResolver
+                    .query(contactUri!!, queryFields, null, null, null)
+                cursor?.use {
+                    if (it.count == 0) return
+                    it.moveToFirst()
+                    val suspect = it.getString(0)
+                    crime.suspect = suspect
+                    crimeVM.updateCrime(crime)
+                    updateUI()
+                }
+            }
+        }
+
+
+
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -92,6 +140,22 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callback {
         btnDate.text = crime.date.toString()
         cbSolved.isChecked = crime.isSolved
         cbSolved.jumpDrawablesToCurrentState()
+        if (crime.suspect.isNullOrEmpty()) btnChooseSuspect.text = crime.suspect
+    }
+
+    private fun getCrimeReport(): String {
+        val solvedString = if (crime.isSolved) {
+            getString(R.string.crime_report_solved)
+        }else {
+            getString(R.string.crime_report_unsolved)
+        }
+        val dateString = DateFormat.format(DATE_FORMAT, crime.date).toString()
+        val suspect = if (crime.suspect.isBlank()) {
+            getString(R.string.crime_report_no_suspect)
+        } else {
+            getString(R.string.crime_report_suspect, crime.suspect)
+        }
+        return getString(R.string.crime_report, crime.title, dateString, solvedString, suspect)
     }
 
     companion object {
