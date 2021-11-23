@@ -2,6 +2,7 @@ package com.example.criminal_intent
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.text.Editable
@@ -93,7 +94,10 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callback {
         }
         btnChooseSuspect.apply {
             val picContactIntent = Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI)
-            startActivityForResult(picContactIntent, REQUEST_CONTACT)
+            setOnClickListener { startActivityForResult(picContactIntent, REQUEST_CONTACT) }
+            val packageManager = requireActivity().packageManager
+            val resolveActivity = packageManager.resolveActivity(picContactIntent, PackageManager.MATCH_DEFAULT_ONLY)
+            if (resolveActivity == null) isEnabled = false
         }
     }
 
