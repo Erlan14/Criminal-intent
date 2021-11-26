@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.Query
 import com.example.criminal_intent.database.CrimeDatabase
+import java.io.File
 import java.lang.IllegalArgumentException
 import java.util.*
 import java.util.concurrent.Executors
@@ -15,6 +16,8 @@ class CrimeRepository(private val context: Context) {
     private val database = CrimeDatabase.getDatabase(context)
 
     private val crimeDao = database.crimeDao()
+
+    private val filesDir = context.applicationContext.filesDir
 
     fun getCrimes(): LiveData<List<Crime>> {
         return crimeDao.getCrimes()
@@ -35,6 +38,8 @@ class CrimeRepository(private val context: Context) {
             crimeDao.insert(crime)
         }
     }
+
+    fun getCrimePhotoFile(crime: Crime): File = File(filesDir, crime.photoFileName)
 
 
     companion object {

@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import java.io.File
 import java.util.*
 
 class CrimeVM : ViewModel() {
@@ -22,5 +23,7 @@ class CrimeVM : ViewModel() {
     fun updateCrime(crime: Crime) {
         crimeRepository.updateCrime(crime)
     }
+
+    fun getPhotoFile(crime: Crime): File = crimeRepository.getCrimePhotoFile(crime)
 
 }
